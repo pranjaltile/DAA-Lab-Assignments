@@ -1,60 +1,69 @@
-import java.io.IOException;
 import java.util.*;
 
-public class Knapsack{
-    public static void main(String...args){
-    
-    int i=0, j=0, max_qty, m, n;
-    float sum=0, max;
-    int a[][]= new int[5][5];
-    
-    Scanner sc= new Scanner(System.in);
-    System.out.println("Enter number of items:");
-    n=sc.nextInt();
-    
-    System.out.println("Enter weights:");
-    for(i=0; i<n; i++){
-        a[i][0]=sc.nextInt();
-    }
-    
-    System.out.println("Enter profits:");
-     for(i=0; i<n; i++){
-        a[1][i]=sc.nextInt();
-    }
-    
-    System.out.println("Enter large volume of Knapsack:");
-    max_qty=sc.nextInt();
-    
-    m=max_qty;
-    while(m>=0){
-    max=0;
-        for(i=0; i<n; i++){
-            if( ((float)a[1][i]/(float) a[0][i]) > max){
-            //if( (a[1][i])/( a[0][i])){
-                max= (((float) a[1][i])/((float) a[0][i]));
-                //m= ((a[1][i])/(a[0][i]));
-                j=i;
-            }
-            
+public class Knapsack {
+    public static void main(String... args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.println("Enter number of items:");
+        int n = sc.nextInt();
+
+        int[] weights = new int[n];
+        int[] profits = new int[n];
+        float[] ratios = new float[n];
+
+        System.out.println("Enter weights:");
+        for (int i = 0; i < n; i++) {
+            weights[i] = sc.nextInt();
         }
+
+        System.out.println("Enter profits:");
+        for (int i = 0; i < n; i++) {
+            profits[i] = sc.nextInt();
+        }
+
         
-        if(a[0][j]>=m){
-            System.out.println("Quantity of item "+(j+1)+" is: "+m);
-            sum+=m*max;
-            m=-1;
+        for (int i = 0; i < n; i++) {
+            ratios[i] = (float) profits[i] / weights[i];
         }
-        else{
-            System.out.println("Quantity of item "+(j+1)+" is: "+ a[0][j]);
-            sum+= (float)a[1][j];
-            m-=a[0][j];
-            a[0][j]=0;
+
+        System.out.println("Enter the large volume of Knapsack:");
+        int maxQty = sc.nextInt();
+
+      
+        Item[] items = new Item[n];
+        for (int i = 0; i < n; i++) {
+            items[i] = new Item(weights[i], profits[i], ratios[i]);
         }
+
+  
+        Arrays.sort(items, (a, b) -> Float.compare(b.ratio, a.ratio));
+
+        float totalProfit = 0;
+        int remainingCapacity = maxQty;
+
+      
+        for (Item item : items) {
+            if (remainingCapacity == 0) break;
+
+            int qtyToTake = Math.min(item.weight, remainingCapacity);
+            totalProfit += qtyToTake * item.ratio;
+            remainingCapacity -= qtyToTake;
         }
-    
-    
-    System.out.println("Profit is:"+sum);
-    sc.close();
-  }
-}  
-                
-    
+
+        System.out.println("Profit is: " + totalProfit);
+        sc.close();
+    }
+
+
+    static class Item {
+        int weight;
+        int profit;
+        float ratio;
+
+        Item(int weight, int profit, float ratio) {
+            this.weight = weight;
+            this.profit = profit;
+            this.ratio = ratio;
+        }
+    }
+}
