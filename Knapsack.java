@@ -1,69 +1,132 @@
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Scanner;
 
-public class Knapsack {
-    public static void main(String... args) {
-        Scanner sc = new Scanner(System.in);
+class Item {
+    int weight;
+    int value;
+    
+    Item(int weight, int value) {
+        this.weight = weight;
+        this.value = value;
+    }
+}
 
-        System.out.println("Enter number of items:");
-        int n = sc.nextInt();
-
-        int[] weights = new int[n];
-        int[] profits = new int[n];
-        float[] ratios = new float[n];
-
-        System.out.println("Enter weights:");
-        for (int i = 0; i < n; i++) {
-            weights[i] = sc.nextInt();
-        }
-
-        System.out.println("Enter profits:");
-        for (int i = 0; i < n; i++) {
-            profits[i] = sc.nextInt();
-        }
-
+class Knapsack {
+    
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
         
-        for (int i = 0; i < n; i++) {
-            ratios[i] = (float) profits[i] / weights[i];
-        }
-
-        System.out.println("Enter the large volume of Knapsack:");
-        int maxQty = sc.nextInt();
-
-      
+        System.out.print("Enter the number of items: ");
+        int n = scanner.nextInt();
+        
         Item[] items = new Item[n];
+        int[] profits = new int[n];
+        int[] weights = new int[n];
+
+        System.out.println("Enter profits and weights for each item:");
         for (int i = 0; i < n; i++) {
-            items[i] = new Item(weights[i], profits[i], ratios[i]);
+            System.out.print("Item " + (i + 1) + " Profit: ");
+            profits[i] = scanner.nextInt();
+            System.out.print("Item " + (i + 1) + " Weight: ");
+            weights[i] = scanner.nextInt();
+            items[i] = new Item(weights[i], profits[i]);
         }
+        
+        System.out.print("Enter the capacity of the knapsack: ");
+        int capacity = scanner.nextInt();
+        
+        double maxValue = getMaxValue(items, capacity, n);
+        System.out.println("Maximum value in Knapsack = " + maxValue);
+    }
+    
+    public static double getMaxValue(Item[] items, int capacity, int n) {
+        // Sort items by value/weight ratio in descending order
+        Arrays.sort(items, Comparator.comparingDouble((Item item) -> (double)item.value / item.weight).reversed());
 
-  
-        Arrays.sort(items, (a, b) -> Float.compare(b.ratio, a.ratio));
 
-        float totalProfit = 0;
-        int remainingCapacity = maxQty;
-
-      
-        for (Item item : items) {
-            if (remainingCapacity == 0) break;
-
-            int qtyToTake = Math.min(item.weight, remainingCapacity);
-            totalProfit += qtyToTake * item.ratio;
-            remainingCapacity -= qtyToTake;
-        }
-
-        System.out.println("Profit is: " + totalProfit);
-        sc.close();
+        return branchAndBound(items, capacity, n);
     }
 
+    private static double branchAndBound(Item[] items, int capacity, int n) {
+        int maxWeight = 0;
+        double maxValue = 0;
+        boolean[] included = new boolean[n];
 
-    static class Item {
+        // Create a queue to hold the nodes of the state space tree
+        Node[] queue = new Node[n * n];
+        int front = 0, rear = -1;
+
+        // Initial node
+        Node root = new Node(0, 0, 0.0, new boolean[n]);
+        enqueue(queue, rear++, root);
+
+        while (front <= rear) {
+            Node currentNode = dequeue(queue, front++);
+
+            // If we have reached the end of the items
+            if (currentNode.level == n) {
+                continue;
+            }
+
+            // Consider the next item
+            Item nextItem = items[currentNode.level];
+
+            // Create the node for including the item
+            Node withItem = new Node(currentNode.level + 1,
+                                     currentNode.weight + nextItem.weight,
+                                     currentNode.value + nextItem.value,
+                                     Arrays.copyOf(currentNode.included, n));
+            withItem.included[currentNode.level] = true;
+
+            // Check if the item can be included
+            if (withItem.weight <= capacity) {
+                if (withItem.value > maxValue) {
+                    maxValue = withItem.value;
+                    maxWeight = withItem.weight;
+                    included = Arrays.copyOf(withItem.included, n);
+                }
+                enqueue(queue, rear++, withItem);
+            }
+
+            // Create the node for excluding the item
+            Node withoutItem = new Node(currentNode.level + 1, currentNode.weight, currentNode.value, Arrays.copyOf(currentNode.included, n));
+            enqueue(queue, rear++, withoutItem);
+        }
+
+        // Output the result
+        System.out.println("Selected items for maximum profit:");
+        for (int i = 0; i < n; i++) {
+            if (included[i]) {
+                System.out.println("Item " + (i + 1) + " - Profit: " + items[i].value + ", Weight: " + items[i].weight);
+            }
+        }
+        System.out.println("Total weight: " + maxWeight);
+        System.out.println("Total profit: " + maxValue);
+        
+        return maxValue;
+    }
+
+    private static void enqueue(Node[] queue, int rear, Node node) {
+        queue[rear] = node;
+    }
+
+    private static Node dequeue(Node[] queue, int front) {
+        return queue[front];
+    }
+
+    static class Node {
+        int level;
         int weight;
-        int profit;
-        float ratio;
+        double value;
+        boolean[] included;
 
-        Item(int weight, int profit, float ratio) {
+        Node(int level, int weight, double value, boolean[] included) {
+            this.level = level;
             this.weight = weight;
-            this.profit = profit;
-            this.ratio = ratio;
+            this.value = value;
+            this.included = included;
         }
     }
 }
+
