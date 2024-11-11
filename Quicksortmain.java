@@ -1,4 +1,5 @@
 import java.util.Arrays;
+import java.util.Scanner;
 
 class Quicksort {
 
@@ -43,19 +44,30 @@ class Quicksort {
 }
 
 
-class Quicksortmain{
+public class Quicksortmain{
   public static void main(String args[]) {
+    Scanner sc = new Scanner(System.in);
 
-    int[] data = { 8, 7, 2, 1, 0, 9, 6 };
+    System.out.println("Enter the size of the array:");
+    int size = sc.nextInt();
+    int[] data = new int[size];
+
+    System.out.println("Enter " + size + " elements:");
+    for (int i = 0; i < size; i++) {
+        data[i] = sc.nextInt();
+    }
+    //int[] data = { 8, 7, 2, 1, 0, 9, 6 };
     System.out.println("Unsorted Array");
     System.out.println(Arrays.toString(data));
 
-    int size = data.length;
+    //int size = data.length;
 
 
     Quicksort.quickSort(data, 0, size - 1);
 
     System.out.println("Sorted Array in Ascending Order ");
     System.out.println(Arrays.toString(data));
+
+    sc.close();
   }
 }
